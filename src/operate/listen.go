@@ -3,6 +3,7 @@ package operate
 import (
 	"changeme/src/logger"
 	hook "github.com/robotn/gohook"
+	"net"
 )
 
 func init() {
@@ -32,11 +33,10 @@ func add() {
 func low() {
 	evChan := hook.Start()
 	defer hook.End()
-
 	for ev := range evChan {
 		//fmt.Println("hook: ", ev)
 
-		step := operateStep{Event: ev, ClientKey: "test"}
+		step := operateStep{Event: ev, ClientKey: getMacAddr()}
 		operateController.sendOperateChan <- step
 	}
 
@@ -44,4 +44,17 @@ func low() {
 
 func create() {
 
+}
+
+func getMacAddr() string {
+	macAddr := ""
+	interfaces, err := net.Interfaces()
+	if err != nil {
+		logger.GetLogger().Error(err)
+		return ""
+	}
+	for _, inter := range interfaces {
+		macAddr += inter.HardwareAddr.String()
+	}
+	return macAddr
 }

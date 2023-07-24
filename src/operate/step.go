@@ -1,9 +1,5 @@
 package operate
 
-func moveMouse() {
-
-}
-
 func clickMouseDown(buttonType int) {
 
 }

@@ -7,7 +7,6 @@ import (
 	"golang.org/x/net/ipv6"
 	"net"
 	"sync"
-	"time"
 )
 
 type operateStep struct {
@@ -35,17 +34,7 @@ func init() {
 }
 
 func (control *operateControl) connectServer(wg *sync.WaitGroup) {
-	//tcpConn, err := net.Dial("tcp", "127.0.0.1:8002")
-	//if err != nil {
-	//	logger.GetLogger().Error(err)
-	//	return
-	//}
-	//control.tcpConn = tcpConn
-	//_, err = control.tcpConn.Write([]byte("test"))
-	//if err != nil {
-	//	logger.GetLogger().Info()
-	//	return
-	//}
+
 	//124.70.94.103
 	udpAddr, err := net.ResolveUDPAddr("udp", "localhost:8001")
 	if err != nil {
@@ -58,8 +47,10 @@ func (control *operateControl) connectServer(wg *sync.WaitGroup) {
 		return
 	}
 	control.conn = *conn
-	control.conn.SetReadDeadline(time.Now().Add(1 * time.Second))
-	control.conn.Write([]byte("test"))
+	//control.conn.SetReadDeadline(time.Now().Add(1 * time.Second))
+	control.conn.SetWriteBuffer(64000)
+	control.conn.SetReadBuffer(64000)
+	control.conn.Write([]byte(getMacAddr()))
 	wg.Done()
 
 	go func() {
@@ -72,15 +63,18 @@ func (control *operateControl) connectServer(wg *sync.WaitGroup) {
 				logger.GetLogger().Error(err)
 				return
 			}
-			logger.GetLogger().Info(string(buf[:n]))
-			data := operateStep{}
-			err = json.Unmarshal(buf[:n], &data)
-			if err != nil {
-				logger.GetLogger().Error(err)
-			}
+			go func() {
+				logger.GetLogger().Info(string(buf[:n]))
+				data := operateStep{}
+				err = json.Unmarshal(buf[:n], &data)
+				if err != nil {
+					logger.GetLogger().Error(err)
+				}
 
-			control.operateChan <- data
+				control.operateChan <- data
+			}()
 		}
+
 		//logger.GetLogger().Info(string(result))
 
 	}()
